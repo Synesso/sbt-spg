@@ -3,7 +3,7 @@ package sbtspg
 import sbt._
 import Keys._
 
-object StaticPageGenerator extends AutoPlugin {
+object SPGPlugin extends AutoPlugin {
 
   override lazy val projectSettings = Seq(commands += siteCommand)
 
