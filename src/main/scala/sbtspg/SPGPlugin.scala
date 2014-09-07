@@ -5,12 +5,22 @@ import Keys._
 
 object SPGPlugin extends AutoPlugin {
 
-  override lazy val projectSettings = Seq(commands += siteCommand)
+  object autoImport {
 
-  lazy val siteCommand = Command.command("site") {state: State =>
-    println("this is the thing~!")
-    state
+    val spgGenerate = taskKey[Set[File]]("Generates static pages from markdown files")
+
+    lazy val baseSpgGenerateSettings: Seq[sbt.Def.Setting[_]] = Seq(
+      spgGenerate := Generator.sources(new File("src/test/resources/generator"))
+    )
+
   }
+
+  import autoImport._
+
+  override val projectSettings = inConfig(Compile)(baseSpgGenerateSettings)
+
+  override val trigger = allRequirements
+
 }
 
 // "I could murder a curry!" - SPG
