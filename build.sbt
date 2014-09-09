@@ -11,7 +11,7 @@ scalacOptions ++= Seq("-feature")
 sbtPlugin := true
 
 libraryDependencies ++= Seq(
-  "org.pegdown" % "pegdown" % "1.4.2",
+  "com.tristanhunt" %% "knockoff" % "0.8.2",
   "org.specs2" %% "specs2" % "2.4.2" % "test"
 )
 
