@@ -1,18 +1,13 @@
 package sbtspg
 
+import sbt.Keys._
 import sbt._
-import Keys._
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.language.postfixOps
-import scala.concurrent.Await
 
 object SPGPlugin extends AutoPlugin {
 
   object autoImport {
 
     import java.io.File
-    import Generator._
 
     val siteSource = settingKey[File]("Base directory for the site files")
     val siteArticles = settingKey[File]("Articles folder")
@@ -25,11 +20,11 @@ object SPGPlugin extends AutoPlugin {
       siteArticles := new File(siteSource.value, "_articles"),
       siteDrafts := new File(siteSource.value, "_drafts"),
       siteLayouts := new File(siteSource.value, "_layouts"),
-      spgGenerate := Await.result(transform(sources(siteSource.value), target.value), 1 minute)
+      spgGenerate := new Generator(siteArticles.value, siteDrafts.value, siteLayouts.value, target.value).generate
     )
   }
 
-  import autoImport._
+  import sbtspg.SPGPlugin.autoImport._
 
   override val projectSettings = baseSpgGenerateSettings
 
