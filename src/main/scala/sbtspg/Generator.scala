@@ -20,8 +20,7 @@ object Generator {
   def transform(sources: Set[File], target: File): Future[Set[File]] = {
     Future.sequence(sources.map { f =>
       Future {
-        // todo - does knockoff actually support OL?
-        val xhtml = toXHTML(knockoff(Source.fromFile(f).getLines().mkString))
+        val xhtml = toXHTML(knockoff(Source.fromFile(f).mkString))
         val file = new File(target, f.getName.substring(0, f.getName.lastIndexOf('.')) + ".html")
         write(xhtml, file)
       }
