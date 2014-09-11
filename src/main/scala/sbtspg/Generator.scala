@@ -52,6 +52,22 @@ object Generator {
     new File(targetDir, name)
   }
 
+  def frontMatter(lines: Seq[String]) = {
+    def loop(remaining: Seq[String], started: Boolean, matter: Map[String, String]): Map[String, String] = {
+      (remaining, started) match {
+        case (Nil, _) => matter
+        case ("---" :: xs, true) => matter
+        case ("---" :: xs, false) => loop(xs, started = true, matter)
+        case (x :: xs, true) => x.split(":", 2) match {
+          case Array(k, v) => loop(xs, started, matter + (k -> v))
+          case _ => loop(xs, started, matter)
+        }
+        case _ => matter
+      }
+    }
+    loop(lines, started = false, Map.empty)
+  }
+
   private def extension(f: File) = if (f.getName.contains(".")) f.getName.substring(f.getName.lastIndexOf(".")) else ""
 
 }
