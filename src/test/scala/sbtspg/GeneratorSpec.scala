@@ -4,7 +4,7 @@ import java.io.File
 
 import org.specs2.Specification
 
-import scala.concurrent.Future
+import scala.io.Source
 
 class GeneratorSpec extends Specification { def is = s2"""
 
@@ -13,14 +13,10 @@ class GeneratorSpec extends Specification { def is = s2"""
     find only & all *.md or *.markdown files $sources2
     should recursively find files $sources3
     find nothing when the directory is empty $sources4
-    find the file when given a file that matches $sources5
+    find nothing when given a file that matches $sources5
     find nothing when given a file that doesn't match $sources6
 
-  The targetFor method should
-    mirror a file in the base directory and replace the extension with .html $targetFor1
-    mirror a file in a subdirectory and replace the extension with .html $targetFor2
-
-  The frontMatter method should
+  The frontMatterAndContent method should
     resolve to an empty map for empty content $frontMatter01
     resolve to an empty map for empty frontmatter $frontMatter02
     resolve to an empty map for no frontmatter section $frontMatter03
@@ -34,44 +30,56 @@ class GeneratorSpec extends Specification { def is = s2"""
 
 """
 
-  import Generator._
+  import sbtspg.Generator._
 
-  def frontMatter01 = frontMatter(Seq.empty[String]) must beEqualTo(Map.empty[String, String])
-  def frontMatter02 = frontMatter(Seq("---","---","content")) must beEqualTo(Map.empty[String, String])
-  def frontMatter03 = frontMatter(Seq("content")) must beEqualTo(Map.empty[String, String])
-  def frontMatter04 = frontMatter(Seq("", "---", "key:value", "---")) must beEqualTo(Map.empty[String, String])
-  def frontMatter05 = frontMatter(Seq("---", "key:value")) must beEqualTo(Map.empty[String, String])
-  def frontMatter06 = frontMatter(Seq("---", "\t", "---")) must beEqualTo(Map.empty[String, String])
-  def frontMatter07 = frontMatter(Seq("---", "key", "---")) must beEqualTo(Map.empty[String, String])
-  def frontMatter08 = frontMatter(Seq("---", "key:value", "key2:value", "---")) must beEqualTo(
-    Map("key" -> "value", "key2" -> "value")
-  )
-  def frontMatter09 = frontMatter(Seq("---", "key:value:pair", "---")) must beEqualTo(Map("key" -> "value:pair"))
-  def frontMatter10 = frontMatter(Seq("---", "key:value1", "key:value2", "---")) must beEqualTo(Map("key" -> "value2"))
+  /* sources method */
 
-
-  def sources1 = sources(file("invalid")) must beEqualTo(Set.empty[File])
-
-  def sources2 = sources(file("sources2")) must beEqualTo(Set(
-    file("sources2/first.md"), file("sources2/second.markdown")
+  def sources1 = sources(file("invalid")) must beEqualTo(Set.empty)
+  def sources2 = parsed(sources(file("sources2"))) must beEqualTo(Set(
+    parsed("sources2", "first.md"), parsed("sources2", "second.markdown")
   ))
-
-  def sources3 = sources(file("sources3")) must beEqualTo(Set(
-    file("sources3/this.md"), file("sources3/more/another.md")
+  def sources3 = parsed(sources(file("sources3"))) must beEqualTo(Set(
+    parsed("sources3", "this.md"), parsed("sources3", "more/another.md")
   ))
-
   def sources4 = sources(file("sources4")) must beEmpty
-
-  def sources5 = sources(file("sources2/first.md")) must beEqualTo(Set(file("sources2/first.md")))
-
+  def sources5 = sources(file("sources2/first.md")) must beEmpty
   def sources6 = sources(file("sources2/noextension")) must beEmpty
 
-  def targetFor1 = targetFor(new File("sourceBase"), new File("sourceBase/first.md"), new File("target")) must
-    beEqualTo(new File("target/first.html"))
+  private def parsed(ms: Set[MarkupSource]) = ms.map { case MarkupSource(s, p) => (s.mkString, p) }
+  private def parsed(dir: String, name: String) = {
+    val d = file(dir)
+    val f = file(s"$dir/$name")
+    (Source.fromFile(f).mkString, d.toPath.relativize(f.toPath))
+  }
 
-  def targetFor2 = targetFor(new File("sourceBase"), new File("sourceBase/subdir/thing.md"), new File("target")) must
-    beEqualTo(new File("target/subdir/thing.html"))
+  /* htmlExt method */
+
+  // todo
+
+  /* frontMatterAndContent method */
+
+  val noMatter = Map.empty[String, String]
+  val noMarkdown = Stream.empty[String]
+  val noNothing = (noMatter, noMarkdown)
+
+  def frontMatter01 = frontMatterAndContent(source()) must beEqualTo(noNothing)
+  def frontMatter02 = frontMatterAndContent(source("---","---","content")) must beEqualTo(noMatter, Stream("content"))
+  def frontMatter03 = frontMatterAndContent(source("content")) must beEqualTo(noMatter, Stream("content"))
+  def frontMatter04 = frontMatterAndContent(source("", "---", "key:value", "---")) must
+    beEqualTo(noMatter, Stream("", "---", "key:value", "---"))
+  def frontMatter05 = frontMatterAndContent(source("---", "key:value")) must
+    beEqualTo(noMatter, Stream("---", "key:value"))
+  def frontMatter06 = frontMatterAndContent(source("---", "\t", "---")) must beEqualTo(noNothing)
+  def frontMatter07 = frontMatterAndContent(source("---", "key", "---")) must beEqualTo(noNothing)
+  def frontMatter08 = frontMatterAndContent(source("---", "key:value", "key2:value", "---")) must beEqualTo(
+    Map("key" -> "value", "key2" -> "value"), noMarkdown
+  )
+  def frontMatter09 = frontMatterAndContent(source("---", "key:value:pair", "---")) must
+    beEqualTo(Map("key" -> "value:pair"), noMarkdown)
+  def frontMatter10 = frontMatterAndContent(source("---", "key:value1", "key:value2", "---")) must
+    beEqualTo(Map("key" -> "value2"), noMarkdown)
 
   private def file(name: String) = new File("src/test/resources/generator", name)
+  private def source(s: String*) = Source.fromString(s.mkString("\n"))
 
 }
