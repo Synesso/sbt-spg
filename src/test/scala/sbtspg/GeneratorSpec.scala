@@ -28,6 +28,14 @@ class GeneratorSpec extends Specification { def is = s2"""
     interpret lines with two or more colons as a kvp, where the value has all trailing colons $frontMatter09
     give precedence to later properties when duplicated $frontMatter10
 
+  The targetFile method should
+    return a file with the extension changed to html and based upon the target directory $htmlExt1
+    return a path and file with the extension changed to html and based upon the target directory $htmlExt2
+    return a file with no extension $htmlExt3
+    return a path and file with no extension $htmlExt4
+    return a file with no extension with dot in the path $htmlExt5
+    return a file with extension with dot in the path $htmlExt6
+
 """
 
   import sbtspg.Generator._
@@ -52,10 +60,6 @@ class GeneratorSpec extends Specification { def is = s2"""
     (Source.fromFile(f).mkString, d.toPath.relativize(f.toPath))
   }
 
-  /* htmlExt method */
-
-  // todo
-
   /* frontMatterAndContent method */
 
   val noMatter = Map.empty[String, String]
@@ -79,7 +83,20 @@ class GeneratorSpec extends Specification { def is = s2"""
   def frontMatter10 = frontMatterAndContent(source("---", "key:value1", "key:value2", "---")) must
     beEqualTo(Map("key" -> "value2"), noMarkdown)
 
+  /* targetFile method */
+
+  val target = new File("target")
+  def htmlExt1 = targetFile(target, path("boo.md")) must beEqualTo(new File("target/boo.html"))
+  def htmlExt2 = targetFile(target, path("some/path/file.md")) must beEqualTo(new File("target/some/path/file.html"))
+  def htmlExt3 = targetFile(target, path("afile")) must beEqualTo(new File("target/afile"))
+  def htmlExt4 = targetFile(target, path("some/other/file")) must beEqualTo(new File("target/some/other/file"))
+  def htmlExt5 = targetFile(target, path("some/fan.cy/file")) must beEqualTo(new File("target/some/fan.cy/file"))
+  def htmlExt6 = targetFile(target, path("some/fan.cy/file.z")) must beEqualTo(new File("target/some/fan.cy/file.html"))
+
+  /* helpers */
+
   private def file(name: String) = new File("src/test/resources/generator", name)
   private def source(s: String*) = Source.fromString(s.mkString("\n"))
+  private def path(s: String) = new File(".").toPath.relativize(new File(s"./$s").toPath)
 
 }

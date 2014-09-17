@@ -33,7 +33,7 @@ class Generator(articlesDir: File, draftsDir: File, layoutsDir: File, targetDir:
     Future.sequence(sources.map { ms =>
       Future {
         val xhtml = toXHTML(knockoff(ms.source.mkString))
-        val file = Generator.htmlExt(new File(targetDir, ms.relativeName.toString)) // todo - creating file just to get name and create new file. fixit.
+        val file = Generator.targetFile(targetDir, ms.relativeName)
         write(xhtml, file)
       }
     })
@@ -63,7 +63,9 @@ object Generator {
     if (dir.isDirectory) loop(dir) else Set.empty
   }
 
-  def htmlExt(f: File): File = new File(f.getAbsolutePath.replaceFirst("\\..+$", ".html")) // todo - spec
+  def targetFile(dir: File, rel: Path): File = {
+    new File(dir, rel.toString.replaceFirst("""\.[^/\\]+$""", ".html"))
+  }
 
   def frontMatterAndContent(source: Source) = {
     val lines = source.getLines().toStream
