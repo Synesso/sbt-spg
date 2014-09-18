@@ -4,6 +4,7 @@ import java.io.File
 
 import org.specs2.Specification
 
+import scala.concurrent.Future
 import scala.io.Source
 
 class GeneratorSpec extends Specification { def is = s2"""
@@ -42,18 +43,18 @@ class GeneratorSpec extends Specification { def is = s2"""
 
   /* sources method */
 
-  def sources1 = sources(file("invalid")) must beEqualTo(Set.empty)
+  def sources1 = sources(file("invalid")) must beEmpty.await
   def sources2 = parsed(sources(file("sources2"))) must beEqualTo(Set(
     parsed("sources2", "first.md"), parsed("sources2", "second.markdown")
-  ))
+  )).await
   def sources3 = parsed(sources(file("sources3"))) must beEqualTo(Set(
     parsed("sources3", "this.md"), parsed("sources3", "more/another.md")
-  ))
-  def sources4 = sources(file("sources4")) must beEmpty
-  def sources5 = sources(file("sources2/first.md")) must beEmpty
-  def sources6 = sources(file("sources2/noextension")) must beEmpty
+  )).await
+  def sources4 = sources(file("sources4")) must beEmpty.await
+  def sources5 = sources(file("sources2/first.md")) must beEmpty.await
+  def sources6 = sources(file("sources2/noextension")) must beEmpty.await
 
-  private def parsed(ms: Set[MarkupSource]) = ms.map { case MarkupSource(s, p) => (s.mkString, p) }
+  private def parsed(fms: Future[Set[MarkupSource]]) = fms.map{_.map { case MarkupSource(s, p) => (s.mkString, p) }}
   private def parsed(dir: String, name: String) = {
     val d = file(dir)
     val f = file(s"$dir/$name")
