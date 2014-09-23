@@ -10,32 +10,32 @@ import scala.io.Source
 class GeneratorSpec extends Specification { def is = s2"""
 
   The sources method should
-    find nothing when the directory does not exist $sources1
-    find only & all *.md or *.markdown files $sources2
-    should recursively find files $sources3
-    find nothing when the directory is empty $sources4
-    find nothing when given a file that matches $sources5
-    find nothing when given a file that doesn't match $sources6
+    find nothing when the directory does not exist _dollar_sources1
+    find only & all *.md or *.markdown files _dollar_sources2
+    should recursively find files _dollar_sources3
+    find nothing when the directory is empty _dollar_sources4
+    find nothing when given a file that matches _dollar_sources5
+    find nothing when given a file that doesn't match _dollar_sources6
 
   The frontMatterAndContent method should
-    resolve to an empty map for empty content $frontMatter01
-    resolve to an empty map for empty frontmatter $frontMatter02
-    resolve to an empty map for no frontmatter section $frontMatter03
-    resolve to an empty map when frontmatter section is preceded by anything $frontMatter04
-    resolve to an empty map when frontmatter section has no closing dashes $frontMatter05
-    interpret empty lines as nothing $frontMatter06
-    interpret lines with no colon as nothing $frontMatter07
-    interpret lines with one colon as a kvp $frontMatter08
-    interpret lines with two or more colons as a kvp, where the value has all trailing colons $frontMatter09
-    give precedence to later properties when duplicated $frontMatter10
+    resolve to an empty map for empty content _dollar_frontMatter01
+    resolve to an empty map for empty frontmatter _dollar_frontMatter02
+    resolve to an empty map for no frontmatter section _dollar_frontMatter03
+    resolve to an empty map when frontmatter section is preceded by anything _dollar_frontMatter04
+    resolve to an empty map when frontmatter section has no closing dashes _dollar_frontMatter05
+    interpret empty lines as nothing _dollar_frontMatter06
+    interpret lines with no colon as nothing _dollar_frontMatter07
+    interpret lines with one colon as a kvp _dollar_frontMatter08
+    interpret lines with two or more colons as a kvp, where the value has all trailing colons _dollar_frontMatter09
+    give precedence to later properties when duplicated _dollar_frontMatter10
 
   The targetFile method should
-    return a file with the extension changed to html and based upon the target directory $htmlExt1
-    return a path and file with the extension changed to html and based upon the target directory $htmlExt2
-    return a file with no extension $htmlExt3
-    return a path and file with no extension $htmlExt4
-    return a file with no extension with dot in the path $htmlExt5
-    return a file with extension with dot in the path $htmlExt6
+    return a file with the extension changed to html and based upon the target directory _dollar_htmlExt1
+    return a path and file with the extension changed to html and based upon the target directory _dollar_htmlExt2
+    return a file with no extension _dollar_htmlExt3
+    return a path and file with no extension _dollar_htmlExt4
+    return a file with no extension with dot in the path _dollar_htmlExt5
+    return a file with extension with dot in the path _dollar_htmlExt6
 
 """
 
@@ -43,6 +43,7 @@ class GeneratorSpec extends Specification { def is = s2"""
 
   /* sources method */
 
+/*
   def sources1 = sources(file("invalid")) must beEmpty.await
   def sources2 = parsed(sources(file("sources2"))) must beEqualTo(Set(
     parsed("sources2", "first.md"), parsed("sources2", "second.markdown")
@@ -93,6 +94,7 @@ class GeneratorSpec extends Specification { def is = s2"""
   def htmlExt4 = targetFile(target, path("some/other/file")) must beEqualTo(new File("target/some/other/file"))
   def htmlExt5 = targetFile(target, path("some/fan.cy/file")) must beEqualTo(new File("target/some/fan.cy/file"))
   def htmlExt6 = targetFile(target, path("some/fan.cy/file.z")) must beEqualTo(new File("target/some/fan.cy/file.html"))
+*/
 
   /* helpers */
 

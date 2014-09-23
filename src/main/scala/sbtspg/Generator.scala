@@ -21,7 +21,7 @@ case class MarkupSource(source: Source, relativeName: Path) {
         case ("---" #:: xs, true) => (matter, remaining.tail)
         case ("---" #:: xs, false) => loop(xs, started = true, matter)
         case (x #:: xs, true) => x.split(":", 2) match {
-          case Array(k, v) => loop(xs, started, matter + (k -> v))
+          case Array(k, v) => loop(xs, started, matter + (k.trim -> v))
           case _ => loop(xs, started, matter)
         }
         case _ => (matter, lines)
