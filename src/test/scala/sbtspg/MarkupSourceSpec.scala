@@ -12,6 +12,12 @@ class MarkupSourceSpec extends Specification with ScalaCheck with ArbitraryInput
    it must contain all frontMatter $allFrontMatter
    it must contain a stream of the remaining source $remainingSource
    it must have exactly the same path $samePath
+   it must ignore whitespace in frontMatter $ignoreWhitespaceFM
+   it must ignore no value entries in frontMatter $ignoreNoValueFM
+   it must have no frontMatter when first line is not --- $todo
+   it must have no frontMatter when trailing --- is not present $todo
+   it must allow colons in the values for frontMatter $todo
+   it must overwrite older values with newer values on frontMatter key clash $todo
 
 """
 
@@ -28,34 +34,15 @@ class MarkupSourceSpec extends Specification with ScalaCheck with ArbitraryInput
     markupWithMeta(fm, content, path).relativeName must beEqualTo(path)
   }
 
+  def ignoreWhitespaceFM = parseFrontMatter("---\n\t\none:two\n---\nend") must beEqualTo(Map("one" -> "two"))
+
+  def ignoreNoValueFM = parseFrontMatter("---\nnovalue\n---") must beEmpty
+
   private def markupWithMeta(fm: Map[String, String], content: String, path: Path) = {
     val sourceString = s"---\n${fm.map{case (k,v) => s"$k:$v"}.mkString("\n")}\n---\n$content"
     val fullSource = Source.fromString(sourceString)
     MarkupSource(fullSource, path).parseFrontMatter
   }
 
-  /*  val noMatter = Map.empty[String, String]
-    val noMarkdown = Stream.empty[String]
-    val noNothing = (noMatter, noMarkdown)
-
-    def frontMatter01 = frontMatterAndContent(source()) must beEqualTo(noNothing)
-    def frontMatter02 = frontMatterAndContent(source("---","---","content")) must beEqualTo(noMatter, Stream("content"))
-    def frontMatter03 = frontMatterAndContent(source("content")) must beEqualTo(noMatter, Stream("content"))
-    def frontMatter04 = frontMatterAndContent(source("", "---", "key:value", "---")) must
-      beEqualTo(noMatter, Stream("", "---", "key:value", "---"))
-    def frontMatter05 = frontMatterAndContent(source("---", "key:value")) must
-      beEqualTo(noMatter, Stream("---", "key:value"))
-    def frontMatter06 = frontMatterAndContent(source("---", "\t", "---")) must beEqualTo(noNothing)
-    def frontMatter07 = frontMatterAndContent(source("---", "key", "---")) must beEqualTo(noNothing)
-    def frontMatter08 = frontMatterAndContent(source("---", "key:value", "key2:value", "---")) must beEqualTo(
-      Map("key" -> "value", "key2" -> "value"), noMarkdown
-    )
-    def frontMatter09 = frontMatterAndContent(source("---", "key:value:pair", "---")) must
-      beEqualTo(Map("key" -> "value:pair"), noMarkdown)
-    def frontMatter10 = frontMatterAndContent(source("---", "key:value1", "key:value2", "---")) must
-      beEqualTo(Map("key" -> "value2"), noMarkdown)
-
-    private def source(s: String*) = Source.fromString(s.mkString("\n"))
-    */
-
+  private def parseFrontMatter(s: String) = MarkupSource(Source.fromString(s), null).parseFrontMatter.meta
 }
