@@ -33,7 +33,7 @@ case class MarkupSource(source: Source, relativeName: Path) {
 }
 
 case class SiteData(tags: Set[String] = Set.empty) {
-  def include(source: MarkupWithMeta)= SiteData(
+  def include(source: MarkupWithMeta) = SiteData(
     tags = source.meta.get("tags").map(_.split(",").toSet ++ tags).getOrElse(tags)
   )
   def tagString = tags.toSeq.sorted.mkString(", ")

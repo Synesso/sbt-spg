@@ -5,6 +5,7 @@ import java.io.File
 import org.scalacheck.{Arbitrary, Gen}
 
 import scala.io.Source
+import scala.collection.JavaConversions._
 
 trait ArbitraryInput {
 
@@ -36,11 +37,14 @@ trait ArbitraryInput {
       src <- arbSourceString.arbitrary
       path <- arbPath.arbitrary
     } yield {
-      val sourceString = s"---\n${fm.map{case (k,v) => s"$k:$v"}.mkString("\n")}\n---\n}$src"
+      val sourceString = s"---\n${fm.map { case (k, v) => s"$k:$v"}.mkString("\n")}\n---\n}$src"
       val fullSource = Source.fromString(sourceString)
       MarkupSource(fullSource, path)
     }
   }
+
+  def arbIdSet: Arbitrary[Set[String]] = Arbitrary(Gen.containerOf(Gen.identifier).map(_.toSet))
+  def arbOptIdSet: Arbitrary[Option[Set[String]]] = Arbitrary(Gen.option(Gen.containerOf(Gen.identifier).map(_.toSet)))
 
   private def path(s: String) = new File(".").toPath.relativize(new File(s"./$s").toPath)
 
