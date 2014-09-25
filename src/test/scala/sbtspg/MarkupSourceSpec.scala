@@ -8,16 +8,16 @@ import scala.io.Source
 
 class MarkupSourceSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
-  On splitting to MarkupWithMeta
-   it must contain all frontMatter $allFrontMatter
-   it must contain a stream of the remaining source $remainingSource
-   it must have exactly the same path $samePath
-   it must ignore whitespace in frontMatter $ignoreWhitespaceFM
-   it must ignore no value entries in frontMatter $ignoreNoValueFM
-   it must have no frontMatter when first line is not --- $firstLineNotDashes
-   it must have no frontMatter when trailing --- is not present $noTrailingDashes
-   it must allow colons in the values for frontMatter $colonsInValues
-   it must overwrite older values with newer values on frontMatter key clash $overwriteNewerValues
+  On splitting to MarkupWithMeta it must
+    contain all frontMatter $allFrontMatter
+    contain a stream of the remaining source $remainingSource
+    have exactly the same path $samePath
+    ignore whitespace in frontMatter $ignoreWhitespaceFM
+    ignore no value entries in frontMatter $ignoreNoValueFM
+    have no frontMatter when first line is not --- $firstLineNotDashes
+    have no frontMatter when trailing --- is not present $noTrailingDashes
+    allow colons in the values for frontMatter $colonsInValues
+    overwrite older values with newer values on frontMatter key clash $overwriteNewerValues
 
 """
 

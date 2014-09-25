@@ -4,11 +4,11 @@ import org.specs2.{ScalaCheck, Specification}
 
 class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
-  On including another SiteData
-    it should include the incoming tags $incomingTags
+  On including another SiteData it must
+    include the incoming tags $incomingTags
 
-  On presenting a tag string
-    it should be sorted and comma-separated $tagString
+  On presenting a tag string it must
+    be sorted and comma-separated $tagString
 
 """
 
