@@ -36,14 +36,16 @@ case class SiteData(tags: Set[String] = Set.empty) {
   def include(source: MarkupWithMeta) = SiteData(
     tags = source.meta.get("tags").map(_.split(",").toSet ++ tags).getOrElse(tags)
   )
-  def tagString = tags.toSeq.sorted.mkString(", ")
+  def tagString: Option[String] = if (tags.isEmpty) None else Some(tags.toSeq.sorted.mkString(", "))
 }
 
 case class MarkupWithMeta(meta: Map[String, String], stream: Stream[String], relativeName: Path) {
   // todo - parse the templates and apply them
 
   def preProcess(data: SiteData): Page = {
-    val stream_ = stream.map(_.replaceAll("\\{tags\\}", data.tagString)) // todo - plus all other special sitedata + all meta
+    val stream_ = stream.map(_.replaceAll("\\{tags\\}", data.tagString.getOrElse("")))
+    // todo - plus all other special sitedata + all meta
+    // todo - how to cater for tagString being optional in template
     val content = toXHTML(knockoff(stream_.mkString("\n")))
     Page(content, relativeName)
   }

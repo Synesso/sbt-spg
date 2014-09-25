@@ -1,8 +1,6 @@
 package sbtspg
 
-import org.specs2.{Specification, ScalaCheck}
-
-import scala.collection.Set
+import org.specs2.{ScalaCheck, Specification}
 
 class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
@@ -24,8 +22,8 @@ class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { d
   }
 
   def tagString = arbIdSet{tags =>
-    if (tags.isEmpty) SiteData(tags).tagString must beEqualTo("")
-    else SiteData(tags).tagString.split(", ") must beEqualTo(tags.toArray.sorted)
+    if (tags.isEmpty) SiteData(tags).tagString must beNone
+    else SiteData(tags).tagString.map(_.split(", ")) must beSome(tags.toArray.sorted)
   }
 
 }
