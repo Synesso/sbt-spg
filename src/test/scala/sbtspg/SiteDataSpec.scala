@@ -2,10 +2,15 @@ package sbtspg
 
 import org.specs2.{Specification, ScalaCheck}
 
+import scala.collection.Set
+
 class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
   On including another SiteData
     it should include the incoming tags $incomingTags
+
+  On presenting a tag string
+    it should be sorted and comma-separated $tagString
 
 """
 
@@ -16,6 +21,11 @@ class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { d
     }.getOrElse(Map.empty)
     val result = SiteData(base) include MarkupWithMeta(incomingMeta, null, null)
     result.tags must beEqualTo(incoming.map(_ ++ base).getOrElse(base))
+  }
+
+  def tagString = arbIdSet{tags =>
+    if (tags.isEmpty) SiteData(tags).tagString must beEqualTo("")
+    else SiteData(tags).tagString.split(", ") must beEqualTo(tags.toArray.sorted)
   }
 
 }
