@@ -2,12 +2,12 @@ package sbtspg
 
 import java.io.File
 
-import org.specs2.Specification
+import org.specs2.{ScalaCheck, Specification}
 
 import scala.concurrent.Future
 import scala.io.Source
 
-class GeneratorSpec extends Specification { def is = s2"""
+class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
   The sources method should
     find nothing when the directory does not exist _dollar_sources1
@@ -29,17 +29,34 @@ class GeneratorSpec extends Specification { def is = s2"""
     interpret lines with two or more colons as a kvp, where the value has all trailing colons _dollar_frontMatter09
     give precedence to later properties when duplicated _dollar_frontMatter10
 
-  The targetFile method should
-    return a file with the extension changed to html and based upon the target directory _dollar_htmlExt1
-    return a path and file with the extension changed to html and based upon the target directory _dollar_htmlExt2
-    return a file with no extension _dollar_htmlExt3
-    return a path and file with no extension _dollar_htmlExt4
-    return a file with no extension with dot in the path _dollar_htmlExt5
-    return a file with extension with dot in the path _dollar_htmlExt6
+  The replaceExtensionWithHtml method should return a string
+    where a file with extension is changed to html $replaceFileExt
+    where a path & file with extension is changed to html $replacePathExt
+    where a file with no extension is unchanged $replaceFileNoExt
+    where a path & file with no extension is unchanged $replacePathNoExt
+    where a path including a dot & file with no extension is unchanged $replacePathWithDotNoExt
+    where a path including a dot & file with extension changes the extension only $replacePathWithDotAndExt
+    where a file including a dot with extension changes the extension only $replaceFileWithDotAndExt
+    where a path including a dot & file including a dot with extension changes the extension only $replacePathAndFileWithDotAndExt
 
 """
 
   import sbtspg.Generator._
+
+  def replaceFileExt = (arbId, arbId){(fn, ext) => replaceExtensionWithHtml(path(s"$fn.$ext")) must beEqualTo(s"$fn.html")}
+  def replacePathExt = (arbPath, arbId){(p, ext) => replaceExtensionWithHtml(path(s"$p.$ext")) must beEqualTo(s"$p.html")}
+  def replaceFileNoExt = arbId{fn => replaceExtensionWithHtml(path(fn)) must beEqualTo(fn)}
+  def replacePathNoExt = arbPath{p => replaceExtensionWithHtml(p) must beEqualTo(p.toString)}
+  def replacePathWithDotNoExt = (arbPath, arbPath){(p1, p2) => replaceExtensionWithHtml(path(s"$p1.$p2/$p1")) must
+    beEqualTo(s"$p1.$p2/$p1")}
+  def replacePathWithDotAndExt = (arbPath, arbPath, arbId){(p1, p2, ext) =>
+    replaceExtensionWithHtml(path(s"$p1.$p2/$p1.$ext")) must beEqualTo(s"$p1.$p2/$p1.html")}
+  def replaceFileWithDotAndExt = (arbId, arbId, arbId){(fn1, fn2, ext) =>
+    replaceExtensionWithHtml(path(s"$fn1.$fn2.$ext")) must beEqualTo(s"$fn1.$fn2.html")}
+  def replacePathAndFileWithDotAndExt = (arbPath, arbPath, arbId, arbId, arbId){(p1, p2, fn1, fn2, ext) =>
+    val input = s"$p1.$p2/$p1/$fn1.$fn2"
+    replaceExtensionWithHtml(path(s"$input.$ext")) must beEqualTo(s"$input.html")}
+
 
   /* sources method */
 
@@ -61,39 +78,6 @@ class GeneratorSpec extends Specification { def is = s2"""
     val f = file(s"$dir/$name")
     (Source.fromFile(f).mkString, d.toPath.relativize(f.toPath))
   }
-
-  /* frontMatterAndContent method */
-
-  val noMatter = Map.empty[String, String]
-  val noMarkdown = Stream.empty[String]
-  val noNothing = (noMatter, noMarkdown)
-
-  def frontMatter01 = frontMatterAndContent(source()) must beEqualTo(noNothing)
-  def frontMatter02 = frontMatterAndContent(source("---","---","content")) must beEqualTo(noMatter, Stream("content"))
-  def frontMatter03 = frontMatterAndContent(source("content")) must beEqualTo(noMatter, Stream("content"))
-  def frontMatter04 = frontMatterAndContent(source("", "---", "key:value", "---")) must
-    beEqualTo(noMatter, Stream("", "---", "key:value", "---"))
-  def frontMatter05 = frontMatterAndContent(source("---", "key:value")) must
-    beEqualTo(noMatter, Stream("---", "key:value"))
-  def frontMatter06 = frontMatterAndContent(source("---", "\t", "---")) must beEqualTo(noNothing)
-  def frontMatter07 = frontMatterAndContent(source("---", "key", "---")) must beEqualTo(noNothing)
-  def frontMatter08 = frontMatterAndContent(source("---", "key:value", "key2:value", "---")) must beEqualTo(
-    Map("key" -> "value", "key2" -> "value"), noMarkdown
-  )
-  def frontMatter09 = frontMatterAndContent(source("---", "key:value:pair", "---")) must
-    beEqualTo(Map("key" -> "value:pair"), noMarkdown)
-  def frontMatter10 = frontMatterAndContent(source("---", "key:value1", "key:value2", "---")) must
-    beEqualTo(Map("key" -> "value2"), noMarkdown)
-
-  /* targetFile method */
-
-  val target = new File("target")
-  def htmlExt1 = targetFile(target, path("boo.md")) must beEqualTo(new File("target/boo.html"))
-  def htmlExt2 = targetFile(target, path("some/path/file.md")) must beEqualTo(new File("target/some/path/file.html"))
-  def htmlExt3 = targetFile(target, path("afile")) must beEqualTo(new File("target/afile"))
-  def htmlExt4 = targetFile(target, path("some/other/file")) must beEqualTo(new File("target/some/other/file"))
-  def htmlExt5 = targetFile(target, path("some/fan.cy/file")) must beEqualTo(new File("target/some/fan.cy/file"))
-  def htmlExt6 = targetFile(target, path("some/fan.cy/file.z")) must beEqualTo(new File("target/some/fan.cy/file.html"))
 */
 
   /* helpers */

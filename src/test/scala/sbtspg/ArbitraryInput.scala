@@ -43,6 +43,7 @@ trait ArbitraryInput {
     }
   }
 
+  def arbId: Arbitrary[String] = Arbitrary(Gen.identifier)
   def arbIdSet: Arbitrary[Set[String]] = Arbitrary(Gen.containerOf(Gen.identifier).map(_.toSet))
   def arbOptIdSet: Arbitrary[Option[Set[String]]] = Arbitrary(Gen.option(Gen.containerOf(Gen.identifier).map(_.toSet)))
 

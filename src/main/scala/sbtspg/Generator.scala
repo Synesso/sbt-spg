@@ -79,7 +79,7 @@ class Generator(articlesDir: File, draftsDir: File, layoutsDir: File, targetDir:
     sources.map(_.preProcess(siteData))
   }
 
-  implicit val pathToName = (s: Path) => s.toString.replaceFirst("""\.[^/\\]+$""", ".html")
+  implicit val pathToName = Generator.replaceExtensionWithHtml _
 
   private def transformed: Future[Set[File]] = output.map{_.map{_.write(targetDir)}}
 
@@ -124,26 +124,7 @@ object Generator {
     if (dir.isDirectory) loop(dir) else Set.empty
   }
 
-  def targetFile(dir: File, rel: Path): File = {
-    new File(dir, rel.toString.replaceFirst("""\.[^/\\]+$""", ".html"))
-  }
-
-  def frontMatterAndContent(source: Source) = {
-    val lines = source.getLines().toStream
-    def loop(remaining: Stream[String], started: Boolean, matter: Map[String, String]): (Map[String, String], Stream[String]) = {
-      (remaining, started) match {
-        case (Stream.Empty, _) => (Map.empty, lines)
-        case ("---" #:: xs, true) => (matter, remaining.tail)
-        case ("---" #:: xs, false) => loop(xs, started = true, matter)
-        case (x #:: xs, true) => x.split(":", 2) match {
-          case Array(k, v) => loop(xs, started, matter + (k -> v))
-          case _ => loop(xs, started, matter)
-        }
-        case _ => (matter, lines)
-      }
-    }
-    loop(lines, started = false, Map.empty)
-  }
+  def replaceExtensionWithHtml(s: Path) = s.toString.replaceFirst("""(?s)(.*)\.[^/\\]+$""", "$1.html")
 
   private def extension(f: File) = if (f.getName.contains(".")) f.getName.substring(f.getName.lastIndexOf(".")) else ""
 
