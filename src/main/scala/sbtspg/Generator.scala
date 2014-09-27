@@ -82,34 +82,9 @@ class Generator(articlesDir: File, draftsDir: File, layoutsDir: File, targetDir:
   implicit val pathToName = Generator.replaceExtensionWithHtml _
 
   private def transformed: Future[Set[File]] = output.map{_.map{_.write(targetDir)}}
-
-
-/*
-  private lazy val transformedFiles: Future[Set[File]] = {
-
-    Generator.sources(articlesDir).map{set =>
-      set.map{ms =>
-        val xhtml = toXHTML(knockoff(ms.source.mkString))
-        val file = Generator.targetFile(targetDir, ms.relativeName)
-        write(xhtml, file)
-      }
-    }
-  }
-*/
-
-/*
-  private def write(node: Node, file: File): File = {
-    file.getParentFile.mkdirs
-    val pw = new java.io.PrintWriter(file)
-    try pw.write(Generator.printer.format(node)) finally pw.close()
-    file
-  }
-*/
-
 }
 
 object Generator {
-
 
   val printer = new scala.xml.PrettyPrinter(140, 2)
   private val allowedExtensions = Set(".md", ".markdown")

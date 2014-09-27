@@ -10,24 +10,12 @@ import scala.io.Source
 class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
 
   The sources method should
-    find nothing when the directory does not exist _dollar_sources1
-    find only & all *.md or *.markdown files _dollar_sources2
-    should recursively find files _dollar_sources3
-    find nothing when the directory is empty _dollar_sources4
-    find nothing when given a file that matches _dollar_sources5
-    find nothing when given a file that doesn't match _dollar_sources6
-
-  The frontMatterAndContent method should
-    resolve to an empty map for empty content _dollar_frontMatter01
-    resolve to an empty map for empty frontmatter _dollar_frontMatter02
-    resolve to an empty map for no frontmatter section _dollar_frontMatter03
-    resolve to an empty map when frontmatter section is preceded by anything _dollar_frontMatter04
-    resolve to an empty map when frontmatter section has no closing dashes _dollar_frontMatter05
-    interpret empty lines as nothing _dollar_frontMatter06
-    interpret lines with no colon as nothing _dollar_frontMatter07
-    interpret lines with one colon as a kvp _dollar_frontMatter08
-    interpret lines with two or more colons as a kvp, where the value has all trailing colons _dollar_frontMatter09
-    give precedence to later properties when duplicated _dollar_frontMatter10
+    find nothing when the directory does not exist $sources1
+    find only & all *.md or *.markdown files $sources2
+    should recursively find files $sources3
+    find nothing when the directory is empty $sources4
+    find nothing when given a file that matches $sources5
+    find nothing when given a file that doesn't match $sources6
 
   The replaceExtensionWithHtml method should return a string
     where a file with extension is changed to html $replaceFileExt
@@ -57,20 +45,16 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { 
     val input = s"$p1.$p2/$p1/$fn1.$fn2"
     replaceExtensionWithHtml(path(s"$input.$ext")) must beEqualTo(s"$input.html")}
 
-
-  /* sources method */
-
-/*
-  def sources1 = sources(file("invalid")) must beEmpty.await
+  def sources1 = sources(file("invalid")) must beEmpty[Set[MarkupSource]].await
   def sources2 = parsed(sources(file("sources2"))) must beEqualTo(Set(
     parsed("sources2", "first.md"), parsed("sources2", "second.markdown")
   )).await
   def sources3 = parsed(sources(file("sources3"))) must beEqualTo(Set(
     parsed("sources3", "this.md"), parsed("sources3", "more/another.md")
   )).await
-  def sources4 = sources(file("sources4")) must beEmpty.await
-  def sources5 = sources(file("sources2/first.md")) must beEmpty.await
-  def sources6 = sources(file("sources2/noextension")) must beEmpty.await
+  def sources4 = sources(file("sources4")) must beEmpty[Set[MarkupSource]].await
+  def sources5 = sources(file("sources2/first.md")) must beEmpty[Set[MarkupSource]].await
+  def sources6 = sources(file("sources2/noextension")) must beEmpty[Set[MarkupSource]].await
 
   private def parsed(fms: Future[Set[MarkupSource]]) = fms.map{_.map { case MarkupSource(s, p) => (s.mkString, p) }}
   private def parsed(dir: String, name: String) = {
@@ -78,12 +62,8 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { 
     val f = file(s"$dir/$name")
     (Source.fromFile(f).mkString, d.toPath.relativize(f.toPath))
   }
-*/
-
-  /* helpers */
 
   private def file(name: String) = new File("src/test/resources/generator", name)
-  private def source(s: String*) = Source.fromString(s.mkString("\n"))
   private def path(s: String) = new File(".").toPath.relativize(new File(s"./$s").toPath)
 
 }
