@@ -4,15 +4,33 @@ import java.io.File
 import java.nio.file.Path
 
 import com.tristanhunt.knockoff.DefaultDiscounter._
+import com.typesafe.config.{ConfigFactory, Config}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
+import scala.util.Try
 import scala.xml.Node
 
 case class MarkupSource(source: Source, relativeName: Path) {
+
+  def parseMatter: MarkupWithConfig = {
+    val lines = source.getLines().toStream
+    def loop(remaining: Stream[String], started: Boolean, consumed: Seq[String]): (Config, Stream[String]) = {
+      (remaining, started) match {
+        case ("---" #:: xs, false) => loop(xs, started = true, consumed)
+        case ("---" #:: xs, true) => (ConfigFactory.parseString(consumed.reverse.mkString("\n")), xs)
+        case (x #:: xs, true) => loop(xs, started, x +: consumed)
+        case (_, false) => (ConfigFactory.empty, remaining)
+      }
+    }
+    val (conf, stream) = loop(lines, started = false, Seq.empty)
+    MarkupWithConfig(conf, stream, relativeName)
+  }
+
+  // todo - forget busted-arse yaml. parse HOCON here! Work from a real example, maybe?
   def parseFrontMatter: MarkupWithMeta = {
     val lines = source.getLines().toStream
     def loop(remaining: Stream[String], started: Boolean, matter: Map[String, String]): (Map[String, String], Stream[String]) = {
@@ -50,6 +68,8 @@ case class MarkupWithMeta(meta: Map[String, String], stream: Stream[String], rel
     Page(content, relativeName)
   }
 }
+
+case class MarkupWithConfig(conf: Config, stream: Stream[String], relativeName: Path)
 
 case class Page(content: Node, relativeName: Path) {
 

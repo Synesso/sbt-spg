@@ -2,11 +2,15 @@ package sbtspg
 
 import java.nio.file.Path
 
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, Config}
 import org.specs2.{ScalaCheck, Specification}
 
 import scala.io.Source
+import scala.util.Try
 
 class MarkupSourceSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
+
+  // todo - splits with HOCON
 
   On splitting to MarkupWithMeta it must
     contain all frontMatter $allFrontMatter
@@ -19,7 +23,25 @@ class MarkupSourceSpec extends Specification with ScalaCheck with ArbitraryInput
     allow colons in the values for frontMatter $colonsInValues
     overwrite older values with newer values on frontMatter key clash $overwriteNewerValues
 
+    return failure when frontMatter is invalid HOCON $withInvalidConfig
+    return success with Config when frontMatter is valid HOCON $withValidConfig
+    return success with empty Config when frontMatter is not present $withNoConfig
+
 """
+
+  def withInvalidConfig = (notEmpty(arbSourceString), arbPath){(invalidHocon: String, path: Path) =>
+    val src = Source.fromString(s"---\n$invalidHocon\n---\n")
+    Try { MarkupSource(src, path).parseMatter } must beFailedTry
+  }
+
+  def withValidConfig = (arbConfig, arbSourceString, arbPath) { (conf: Config, content: String, path: Path) =>
+    val src = Source.fromString(s"---\n${conf.root.render}\n---\n$content")
+    MarkupSource(src, path).parseMatter.conf must beEqualTo(conf)
+  }
+
+  def withNoConfig = (arbSourceString, arbPath) {(content: String, path: Path) =>
+    MarkupSource(Source.fromString(content), path).parseMatter.conf must beEqualTo(ConfigFactory.empty)
+  }
 
   def allFrontMatter = (arbFrontMatter, arbSourceString, arbPath){(fm: Map[String, String], content: String, path: Path) =>
     markupWithMeta(fm, content, path).meta must beEqualTo(fm)

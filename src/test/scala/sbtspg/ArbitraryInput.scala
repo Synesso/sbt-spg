@@ -2,6 +2,7 @@ package sbtspg
 
 import java.io.File
 
+import com.typesafe.config.{ConfigFactory, Config}
 import org.scalacheck.{Arbitrary, Gen}
 
 import scala.io.Source
@@ -15,6 +16,8 @@ trait ArbitraryInput {
       ss: List[String] <- Gen.listOfN(i, Gen.alphaStr)
     } yield ss.mkString("\n")
   }
+
+  def notEmpty(arbStr: Arbitrary[String]) = Arbitrary(arbStr.arbitrary.filter(!_.trim.isEmpty))
 
   implicit def arbPath = Arbitrary {
     for {
@@ -41,6 +44,14 @@ trait ArbitraryInput {
       val fullSource = Source.fromString(sourceString)
       MarkupSource(fullSource, path)
     }
+  }
+
+  def arbConfig: Arbitrary[Config] = Arbitrary{
+    for {
+      entries: Int <- Gen.choose(0, 30)
+      keys: List[String] <- Gen.listOfN(entries, Gen.identifier)
+      values: List[String] <- Gen.listOfN(entries, Gen.identifier)
+    } yield ConfigFactory.parseMap(keys.zip(values).toMap[String, String])
   }
 
   def arbId: Arbitrary[String] = Arbitrary(Gen.identifier)
