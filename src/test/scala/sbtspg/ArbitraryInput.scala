@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 
 trait ArbitraryInput {
 
-  implicit def arbSourceString = Arbitrary {
+  def arbSourceString = Arbitrary {
     for {
       i: Int <- Gen.choose(1, 100)
       ss: List[String] <- Gen.listOfN(i, Gen.alphaStr)
@@ -19,27 +19,22 @@ trait ArbitraryInput {
 
   def notEmpty(arbStr: Arbitrary[String]) = Arbitrary(arbStr.arbitrary.filter(!_.trim.isEmpty))
 
-  implicit def arbPath = Arbitrary {
+  def arbPath = Arbitrary {
     for {
       folders: Int <- Gen.choose(1, 12)
       names: List[String] <- Gen.listOfN(folders, Gen.identifier)
     } yield path(names.mkString("/"))
   }
 
-  implicit def arbFrontMatter = Arbitrary {
+  def arbMarkupSource = Arbitrary {
     for {
       entries: Int <- Gen.choose(0, 30)
       keys: List[String] <- Gen.listOfN(entries, Gen.identifier)
       values: List[String] <- Gen.listOfN(entries, Gen.identifier)
-    } yield keys.zip(values).toMap
-  }
-
-  implicit def arbMarkupSource = Arbitrary {
-    for {
-      fm <- arbFrontMatter.arbitrary
       src <- arbSourceString.arbitrary
       path <- arbPath.arbitrary
     } yield {
+      val fm = keys zip values
       val sourceString = s"---\n${fm.map { case (k, v) => s"$k:$v"}.mkString("\n")}\n---\n}$src"
       val fullSource = Source.fromString(sourceString)
       MarkupSource(fullSource, path)

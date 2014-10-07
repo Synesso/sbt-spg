@@ -4,14 +4,14 @@ import java.io.File
 import java.nio.file.Path
 
 import com.tristanhunt.knockoff.DefaultDiscounter._
-import com.typesafe.config.{ConfigFactory, Config}
+import com.typesafe.config.{Config, ConfigFactory}
 
+import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
-import scala.util.Try
 import scala.xml.Node
 
 case class MarkupSource(source: Source, relativeName: Path) {
@@ -23,42 +23,28 @@ case class MarkupSource(source: Source, relativeName: Path) {
         case ("---" #:: xs, false) => loop(xs, started = true, consumed)
         case ("---" #:: xs, true) => (ConfigFactory.parseString(consumed.reverse.mkString("\n")), xs)
         case (x #:: xs, true) => loop(xs, started, x +: consumed)
+        case (Stream.Empty, _) => (ConfigFactory.empty, lines)
         case (_, false) => (ConfigFactory.empty, remaining)
       }
     }
     val (conf, stream) = loop(lines, started = false, Seq.empty)
     MarkupWithConfig(conf, stream, relativeName)
   }
-
-  // todo - forget busted-arse yaml. parse HOCON here! Work from a real example, maybe?
-  def parseFrontMatter: MarkupWithMeta = {
-    val lines = source.getLines().toStream
-    def loop(remaining: Stream[String], started: Boolean, matter: Map[String, String]): (Map[String, String], Stream[String]) = {
-      (remaining, started) match {
-        case (Stream.Empty, _) => (Map.empty, lines)
-        case ("---" #:: xs, true) => (matter, remaining.tail)
-        case ("---" #:: xs, false) => loop(xs, started = true, matter)
-        case (x #:: xs, true) => x.split(":", 2) match {
-          case Array(k, v) => loop(xs, started, matter + (k.trim -> v))
-          case _ => loop(xs, started, matter)
-        }
-        case _ => (matter, lines)
-      }
-    }
-    val (meta, stream) = loop(lines, started = false, Map.empty)
-    MarkupWithMeta(meta, stream, relativeName)
-  }
 }
 
 case class SiteData(tags: Set[String] = Set.empty) {
-  def include(source: MarkupWithMeta) = SiteData(
-    tags = source.meta.get("tags").map(_.split(",").toSet ++ tags).getOrElse(tags)
-  )
+  def include(pageConfig: Config) = {
+    val incTags =
+      if (pageConfig.hasPath("tags")) pageConfig.getStringList("tags").toSet
+      else Set.empty[String]
+    copy(tags = tags ++ incTags)
+  }
   def tagString: Option[String] = if (tags.isEmpty) None else Some(tags.toSeq.sorted.mkString(", "))
 }
 
-case class MarkupWithMeta(meta: Map[String, String], stream: Stream[String], relativeName: Path) {
-  // todo - parse the templates and apply them
+case class MarkupWithConfig(conf: Config, stream: Stream[String], relativeName: Path) {
+  // todo - parse the template and apply them
+  // todo - substitute all site and page data
 
   def preProcess(data: SiteData): Page = {
     val stream_ = stream.map(_.replaceAll("\\{tags\\}", data.tagString.getOrElse("")))
@@ -68,8 +54,6 @@ case class MarkupWithMeta(meta: Map[String, String], stream: Stream[String], rel
     Page(content, relativeName)
   }
 }
-
-case class MarkupWithConfig(conf: Config, stream: Stream[String], relativeName: Path)
 
 case class Page(content: Node, relativeName: Path) {
 
@@ -87,15 +71,15 @@ class Generator(articlesDir: File, draftsDir: File, layoutsDir: File, targetDir:
   def generate: Set[File] = Await.result(transformed, 1 minute)
 
   // source & relative path (MarkupSource) ->
-  // map, stream, relativePath (MarkupWithMeta) ->
+  // map, stream, relativePath (MarkupWithConfig) ->
   // (create SiteData from maps)
   // node & relative path (Page) ->
   // IO write
 
   private val output: Future[Set[Page]] = for {
-    sources <- Generator.sources(articlesDir).map(_.map(_.parseFrontMatter))
+    sources <- Generator.sources(articlesDir).map(_.map(_.parseMatter))
   } yield {
-    val siteData = sources.foldLeft(SiteData()){(sd, src) => sd.include(src)}
+    val siteData = sources.foldLeft(SiteData()){(sd, src) => sd.include(src.conf)}
     sources.map(_.preProcess(siteData))
   }
 

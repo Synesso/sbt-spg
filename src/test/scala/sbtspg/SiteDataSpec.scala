@@ -1,5 +1,6 @@
 package sbtspg
 
+import com.typesafe.config.ConfigFactory
 import org.specs2.{ScalaCheck, Specification}
 
 class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
@@ -13,11 +14,8 @@ class SiteDataSpec extends Specification with ScalaCheck with ArbitraryInput { d
 """
 
   def incomingTags = (arbIdSet, arbOptIdSet){(base, incoming) =>
-    val incomingMeta = incoming.map{xs =>
-      if (xs.isEmpty) Map.empty[String, String]
-      else Map("tags" -> xs.mkString(","))
-    }.getOrElse(Map.empty)
-    val result = SiteData(base) include MarkupWithMeta(incomingMeta, null, null)
+    val conf = ConfigFactory.parseString(incoming.map{xs => s"""tags = [${xs.mkString(", ")}]\n"""}.getOrElse(""))
+    val result = SiteData(base) include conf
     result.tags must beEqualTo(incoming.map(_ ++ base).getOrElse(base))
   }
 
