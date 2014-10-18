@@ -1,13 +1,15 @@
 package sbtspg
 
 import java.io.File
+import java.nio.file.Path
 
+import org.specs2.matcher.ContentMatchers
 import org.specs2.{ScalaCheck, Specification}
 
 import scala.concurrent.Future
 import scala.io.Source
 
-class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { def is = s2"""
+class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput with ContentMatchers { def is = s2"""
 
   The sources method should
     find nothing when the directory does not exist $sources1
@@ -26,6 +28,8 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { 
     where a path including a dot & file with extension changes the extension only $replacePathWithDotAndExt
     where a file including a dot with extension changes the extension only $replaceFileWithDotAndExt
     where a path including a dot & file including a dot with extension changes the extension only $replacePathAndFileWithDotAndExt
+
+  The generator should generate a site $smoke
 
 """
 
@@ -56,6 +60,31 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { 
   def sources5 = sources(file("sources2/first.md")) must beEmpty[Set[MarkupSource]].await
   def sources6 = sources(file("sources2/noextension")) must beEmpty[Set[MarkupSource]].await
 
+  def smoke = {
+    val target = new File("target/generator-smoke-test")
+    val articles = new File("src/test/resources/generator/smoke")
+    val expected = new File("src/test/resources/generator/smoke-expected")
+    target.delete()
+
+    val files = new Generator(articles, draftsDir = null, layoutsDir = null, target).generate
+
+    val actualFiles = filesFrom(target)
+    val expectedFiles = filesFrom(expected)
+    val expectedPaths = pathsFrom(expected)
+
+    val result = files.toSeq.map(_.toPath).map(target.toPath.relativize) must beEqualTo(expectedPaths)
+    val sideEffect = actualFiles.zip(expectedFiles).map(_ must haveSameMD5).reduceLeft(_ and _)
+
+    result and sideEffect
+  }
+
+  private def filesFrom(f: File): Seq[File] =
+    if (f.isFile) f :: Nil
+    else f.listFiles.flatMap(filesFrom)
+
+  private def pathsFrom(dir: File): Seq[Path] =
+    filesFrom(dir).sortBy(_.getName).map(_.toPath).map(dir.toPath.relativize)
+
   private def parsed(fms: Future[Set[MarkupSource]]) = fms.map{_.map { case MarkupSource(s, p) => (s.mkString, p) }}
   private def parsed(dir: String, name: String) = {
     val d = file(dir)
@@ -65,5 +94,4 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput { 
 
   private def file(name: String) = new File("src/test/resources/generator", name)
   private def path(s: String) = new File(".").toPath.relativize(new File(s"./$s").toPath)
-
 }
