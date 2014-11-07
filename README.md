@@ -32,7 +32,7 @@ Content may include a frontmatter section that declares metadata for the article
     ## {tags}
     
     
-The HOCON configuration between the triple-dashes is parsed and available for use in the markdown content. This renders as:
+The [HOCON](https://github.com/typesafehub/config/blob/master/HOCON.md) configuration between the triple-dashes is parsed and available for use in the markdown content. This renders as:
 
     <h1>Here I wish to show you</h1>
     <h2>that, the other thing, this</h2>
