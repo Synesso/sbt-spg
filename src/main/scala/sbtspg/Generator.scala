@@ -12,6 +12,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
+import scala.util.Try
 import scala.xml.Node
 
 case class MarkupSource(source: Source, relativeName: Path) {
@@ -43,11 +44,19 @@ case class SiteData(tags: Set[String] = Set.empty) {
 }
 
 case class MarkupWithConfig(conf: Config, stream: Stream[String], relativeName: Path) {
-  // todo - parse the template and apply them
+  // todo - parse the template and apply them - NEXT, a test for this.
   // todo - substitute all site and page data
 
+  val template: Future[Stream[String]] = Future {
+    Try(conf.getString("template"))
+      .map(fn => Source.fromFile(fn).getLines().toStream)
+      .getOrElse("{{content}}" #:: Stream.empty[String])
+  }
+
   def preProcess(data: SiteData): Page = {
-    val stream_ = stream.map(_.replaceAll("\\{tags\\}", data.tagString.getOrElse("")))
+    // todo - this doesn't have a test!
+    // todo - either it's in the dictionary or it's scala to be interpreted
+    val stream_ = stream.map(_.replaceAll("\\{\\{tags\\}\\}", data.tagString.getOrElse("")))
     // todo - plus all other special sitedata + all meta
     // todo - how to cater for tagString being optional in template
     val content = toXHTML(knockoff(stream_.mkString("\n")))
@@ -108,4 +117,3 @@ object Generator {
   private def extension(f: File) = if (f.getName.contains(".")) f.getName.substring(f.getName.lastIndexOf(".")) else ""
 
 }
-
