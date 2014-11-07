@@ -29,7 +29,7 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput wi
     where a file including a dot with extension changes the extension only $replaceFileWithDotAndExt
     where a path including a dot & file including a dot with extension changes the extension only $replacePathAndFileWithDotAndExt
 
-  The generator should generate a site $smoke
+  The generator should generate a site smoke $pending
 
 """
 
