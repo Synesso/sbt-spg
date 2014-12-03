@@ -6,7 +6,8 @@ import java.nio.file.Path
 import org.specs2.matcher.ContentMatchers
 import org.specs2.{ScalaCheck, Specification}
 
-import scala.concurrent.Future
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 import scala.io.Source
 
 class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput with ContentMatchers { def is = s2"""
@@ -49,13 +50,13 @@ class GeneratorSpec extends Specification with ScalaCheck with ArbitraryInput wi
     val input = s"$p1.$p2/$p1/$fn1.$fn2"
     replaceExtensionWithHtml(path(s"$input.$ext")) must beEqualTo(s"$input.html")}
 
-  def sources1 = sources(file("invalid")) must beEmpty[Set[MarkupSource]].await
+  def sources1 = sources(file("invalid")) must beEmpty[Set[MarkupSource]].await 
   def sources2 = parsed(sources(file("sources2"))) must beEqualTo(Set(
     parsed("sources2", "first.md"), parsed("sources2", "second.markdown")
-  )).await
+    )).await
   def sources3 = parsed(sources(file("sources3"))) must beEqualTo(Set(
-    parsed("sources3", "this.md"), parsed("sources3", "more/another.md")
-  )).await
+      parsed("sources3", "this.md"), parsed("sources3", "more/another.md")
+    )).await
   def sources4 = sources(file("sources4")) must beEmpty[Set[MarkupSource]].await
   def sources5 = sources(file("sources2/first.md")) must beEmpty[Set[MarkupSource]].await
   def sources6 = sources(file("sources2/noextension")) must beEmpty[Set[MarkupSource]].await
